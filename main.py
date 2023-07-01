@@ -6,42 +6,42 @@ EncoderOutput = np.array([])
 def init_dict():
     dictionary = {}
     for i in range(0, 256):
-        dictionary[chr(i)] = i
+        dictionary[(i,)] = i
     return dictionary
 
 def init_dict_encoder():
     dictionary = {}
     for i in range(0, 256):
-        dictionary[i] = chr(i)
+        dictionary[i] = (i,)
     return dictionary
 
 def encode():
     dictionary = init_dict()
-    file = open("test", 'rb')
+    file = open("AMB SUBURBAN Heating Station Ventilation System Less Traffic.wav", 'rb')
 
-    foundChars = ""
+    foundChars = ()
     result = []
     while 1:
         byte = file.read(1)
         if not byte:
             result.append(dictionary.get(foundChars))
             break
-        character = byte.decode("utf-8")
-        charsToAdd = foundChars + character
+        character = int.from_bytes(byte, 'big')
+        charsToAdd = foundChars + (character, )
 
         if charsToAdd in dictionary:
             foundChars = charsToAdd
         else:
             result.append(dictionary.get(foundChars))
             dictionary[charsToAdd] = len(dictionary)
-            foundChars = character
+            foundChars = (character,)
 
     return result
 
 
 def decode(encoded: list):
     dictionary = init_dict_encoder()
-    characters = chr(encoded.pop(0))
+    characters = (encoded.pop(0),)
     result = list(characters)
 
     for code in encoded:
@@ -49,9 +49,10 @@ def decode(encoded: list):
         if code in dictionary:
             entry = dictionary[code]
         else:
-            entry = characters + characters[0]
-        result.append(entry)
-        dictionary[len(dictionary)] = characters + entry[0]
+            entry = characters + (characters[0],)
+        for number in entry:
+            result.append(number)
+        dictionary[len(dictionary)] = characters + (entry[0],)
         characters = entry
     return result
 
@@ -68,7 +69,14 @@ def convert(s):
     return new
 
 code = encode()
-print(code)
+print(len(code))
+print(max(code))
+import pickle
+
+with open('plik.bin', 'wb') as file:
+    pickle.dump(code, file)
+
 result = decode(code)
-print(result)
-print(convert(result))
+with open("decom.wav", 'wb') as f:
+    for r in result:
+        f.write(r.to_bytes(1, 'big'))
